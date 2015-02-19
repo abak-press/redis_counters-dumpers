@@ -1,6 +1,7 @@
 # coding: utf-8
 require 'forwardable'
 require 'active_support/core_ext/hash/indifferent_access'
+require 'active_support/core_ext/object/blank'
 require_relative 'dsl/destination'
 
 module RedisCounters
@@ -48,6 +49,9 @@ module RedisCounters
       # а целевое поле :date, указывает на поле :start_month_date, дампера.
       attr_accessor :fields_map
 
+      # Список полей по которым будет группироваться таблицы с исходными данным, Array
+      attr_accessor :group_by
+
       # Список дополнительных условий, которые применяются при обновлении целевой таблицы, Array of String.
       # Каждое условие представляет собой строку - часть SQL выражения, которое может включать именованные
       # параметры из числа доступных в хеше оббщих параметров дампера: engine.common_params.
@@ -68,7 +72,8 @@ module RedisCounters
             source AS
             (
               SELECT #{selected_fields_expression}
-                FROM #{source_table}
+              FROM #{source_table}
+              #{group_by_expression}
             ),
             updated AS
             (
@@ -83,11 +88,11 @@ module RedisCounters
           INSERT INTO #{target_table} (#{target_fields})
             SELECT #{target_fields}
             FROM source
-          WHERE NOT EXISTS (
-            SELECT 1
+            WHERE NOT EXISTS (
+              SELECT 1
               FROM updated target
-            WHERE #{matching_expression}
-              #{extra_conditions}
+              WHERE #{matching_expression}
+                #{extra_conditions}
           )
         SQL
 
@@ -103,6 +108,11 @@ module RedisCounters
 
       def selected_fields_expression
         full_fields_map.map { |target_field, source_field| "#{source_field} as #{target_field}" }.join(', ')
+      end
+
+      def group_by_expression
+        return if group_by.blank?
+        'GROUP BY %s' % [group_by.join(', ')]
       end
 
       def full_fields_map

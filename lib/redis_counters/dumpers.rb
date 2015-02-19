@@ -1,3 +1,4 @@
+require 'active_record'
 require 'redis_counters/dumpers/version'
 
 module RedisCounters

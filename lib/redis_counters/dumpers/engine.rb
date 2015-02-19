@@ -4,6 +4,7 @@ require 'callbacks_rb'
 require 'active_support/core_ext/hash/indifferent_access'
 require 'redis'
 require 'redis/namespace'
+require 'redis_counters'
 require_relative 'dsl/engine'
 
 module RedisCounters
@@ -179,6 +180,8 @@ module RedisCounters
         destinations.each { |dest| dest.merge }
 
         fire_callback(:on_after_merge, self, db_connection)
+
+        drop_temp_table
       end
 
       def fill_temp_table
@@ -243,6 +246,10 @@ module RedisCounters
             #{columns_definition}
           ) ON COMMIT DROP
         SQL
+      end
+
+      def drop_temp_table
+        db_connection.execute "DROP TABLE #{temp_table_name}"
       end
 
       def analyze_table

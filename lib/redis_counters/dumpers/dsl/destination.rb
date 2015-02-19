@@ -17,6 +17,7 @@ module RedisCounters
           varags_setter :fields
           varags_setter :key_fields
           varags_setter :increment_fields
+          varags_setter :group_by
 
           alias_method :take, :fields
 
