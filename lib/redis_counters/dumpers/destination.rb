@@ -58,10 +58,18 @@ module RedisCounters
       # Условия соеденяются через AND.
       attr_accessor :conditions
 
+      # Список дополнительных условий, которые применяются для выборки из source-таблицы для обновления
+      # target, Array of String.
+      # Каждое условие представляет собой строку - часть SQL выражения, которое может включать именованные
+      # параметры из числа доступных в хеше общих параметров дампера: engine.common_params.
+      # Условия соединяются через AND.
+      attr_accessor :source_conditions
+
       def initialize(engine)
         @engine = engine
         @fields_map = HashWithIndifferentAccess.new
         @conditions = []
+        @source_conditions = []
       end
 
       def merge
@@ -73,6 +81,7 @@ module RedisCounters
             (
               SELECT #{selected_fields_expression}
               FROM #{source_table}
+              #{source_conditions_expression}
               #{group_by_expression}
             ),
             updated AS
@@ -132,6 +141,12 @@ module RedisCounters
       def extra_conditions
         result = conditions.map { |condition| "(#{condition})" }.join(' AND ')
         result.present? ? "AND #{result}" : result
+      end
+
+      def source_conditions_expression
+        return if source_conditions.blank?
+
+        "WHERE #{source_conditions.map { |source_condition| "(#{source_condition})" }.join(' AND ')}"
       end
     end
   end

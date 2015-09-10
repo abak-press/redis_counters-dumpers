@@ -93,5 +93,64 @@ describe RedisCounters::Dumpers::Engine do
     And { expect(StatsAggTotal.count).to eq 2 }
     And { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 6 }
     And { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
+
+    context 'with source conditions' do
+      let(:dumper) do
+        RedisCounters::Dumpers::Engine.build do
+          name :stats_totals
+          fields record_id: :integer,
+                 column_id: :integer,
+                 value: :integer,
+                 date: :date
+
+          destination do
+            model StatsByDay
+            take :record_id, :column_id, :hits, :date
+            key_fields :record_id, :column_id, :date
+            increment_fields :hits
+            map :hits, to: :value
+            condition 'target.date = :date'
+            source_condition 'column_id = 100'
+          end
+
+          destination do
+            model StatsTotal
+            take :record_id, :column_id, :hits
+            key_fields :record_id, :column_id
+            increment_fields :hits
+            map :hits, to: :value
+            source_condition 'column_id = 100'
+          end
+
+          destination do
+            model StatsAggTotal
+            take :record_id, :hits
+            key_fields :record_id
+            increment_fields :hits
+            map :hits, to: 'sum(value)'
+            group_by :record_id
+            source_condition 'column_id = 100'
+          end
+
+          on_before_merge do |dumper, _connection|
+            dumper.common_params = {date: dumper.date.strftime('%Y-%m-%d')}
+          end
+        end
+      end
+
+      Then { expect(StatsByDay.count).to eq 4 }
+      And { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
+      And { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
+      And { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
+      And { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
+
+      And { expect(StatsTotal.count).to eq 2 }
+      And { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
+      And { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
+
+      And { expect(StatsAggTotal.count).to eq 2 }
+      And { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 2 }
+      And { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
+    end
   end
 end
