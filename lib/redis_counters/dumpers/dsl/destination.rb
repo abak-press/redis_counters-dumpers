@@ -28,6 +28,10 @@ module RedisCounters
           def condition(value)
             destination.conditions << value
           end
+
+          def source_condition(value)
+            destination.source_conditions << value
+          end
         end
 
         module ClassMethods
