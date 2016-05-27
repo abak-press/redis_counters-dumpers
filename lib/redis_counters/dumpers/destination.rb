@@ -74,35 +74,37 @@ module RedisCounters
 
       def merge
         target_fields = fields.join(', ')
+        temp_source = "_source_#{source_table}"
 
         sql = <<-SQL
+          CREATE TEMP TABLE #{temp_source} ON COMMIT DROP AS
+            SELECT #{selected_fields_expression}
+            FROM #{source_table}
+            #{source_conditions_expression}
+            #{group_by_expression};
+
           WITH
-            source AS
-            (
-              SELECT #{selected_fields_expression}
-              FROM #{source_table}
-              #{source_conditions_expression}
-              #{group_by_expression}
-            ),
             updated AS
             (
               UPDATE #{target_table} target
               SET
                 #{updating_expression}
-              FROM source
+              FROM #{temp_source} AS source
               WHERE #{matching_expression}
                 #{extra_conditions}
               RETURNING target.*
             )
           INSERT INTO #{target_table} (#{target_fields})
             SELECT #{target_fields}
-            FROM source
+            FROM #{temp_source} as source
             WHERE NOT EXISTS (
               SELECT 1
               FROM updated target
               WHERE #{matching_expression}
                 #{extra_conditions}
-          )
+          );
+
+          DROP TABLE #{temp_source};
         SQL
 
         sql = model.send(:sanitize_sql, [sql, engine.common_params])
