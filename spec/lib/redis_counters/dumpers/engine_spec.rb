@@ -7,7 +7,8 @@ describe RedisCounters::Dumpers::Engine do
       fields record_id: :integer,
              column_id: :integer,
              value: :integer,
-             date: :date
+             date: :date,
+             subject: [:enum, {name: :subject_types}]
 
       destination do
         model StatsByDay
@@ -51,7 +52,7 @@ describe RedisCounters::Dumpers::Engine do
     RedisCounters.create_counter(Redis.current,
       counter_class: RedisCounters::HashCounter,
       counter_name: :record_hits_by_day,
-      group_keys: [:record_id, :column_id],
+      group_keys: [:record_id, :column_id, :subject],
       partition_keys: [:date]
     )
   end
@@ -62,17 +63,17 @@ describe RedisCounters::Dumpers::Engine do
 
   describe '#process!' do
     before do
-      counter.increment(date: prev_date_s, record_id: 1, column_id: 100)
-      counter.increment(date: prev_date_s, record_id: 1, column_id: 200)
-      counter.increment(date: prev_date_s, record_id: 1, column_id: 200)
-      counter.increment(date: prev_date_s, record_id: 2, column_id: 100)
+      counter.increment(date: prev_date_s, record_id: 1, column_id: 100, subject: '')
+      counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '')
+      counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '')
+      counter.increment(date: prev_date_s, record_id: 2, column_id: 100, subject: nil)
 
       dumper.process!(counter, prev_date)
 
-      counter.increment(date: date_s, record_id: 1, column_id: 100)
-      counter.increment(date: date_s, record_id: 1, column_id: 200)
-      counter.increment(date: date_s, record_id: 1, column_id: 200)
-      counter.increment(date: date_s, record_id: 2, column_id: 100)
+      counter.increment(date: date_s, record_id: 1, column_id: 100, subject: '')
+      counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '')
+      counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '')
+      counter.increment(date: date_s, record_id: 2, column_id: 100, subject: nil)
 
       dumper.process!(counter, date)
     end
