@@ -272,7 +272,11 @@ module RedisCounters
                           when :boolean
                             'boolean'
                           else
-                            raise 'Unknown datatype %s for %s field' % [type, field]
+                            if type.is_a?(Array) && type.first == :enum
+                              type.last.fetch(:name)
+                            else
+                              raise 'Unknown datatype %s for %s field' % [type, field]
+                            end
                           end
 
           "#{field} #{pg_field_type}"
