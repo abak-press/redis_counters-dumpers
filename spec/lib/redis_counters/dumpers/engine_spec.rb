@@ -37,7 +37,7 @@ describe RedisCounters::Dumpers::Engine do
       end
 
       on_before_merge do |dumper, _connection|
-        dumper.common_params = {date: dumper.date.strftime('%Y-%m-%d')}
+        dumper.common_params = {date: dumper.args[:date].strftime('%Y-%m-%d')}
       end
     end
   end
@@ -68,14 +68,14 @@ describe RedisCounters::Dumpers::Engine do
       counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '')
       counter.increment(date: prev_date_s, record_id: 2, column_id: 100, subject: nil)
 
-      dumper.process!(counter, prev_date)
+      dumper.process!(counter, date: prev_date)
 
       counter.increment(date: date_s, record_id: 1, column_id: 100, subject: '')
       counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '')
       counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '')
       counter.increment(date: date_s, record_id: 2, column_id: 100, subject: nil)
 
-      dumper.process!(counter, date)
+      dumper.process!(counter, date: date)
     end
 
     Then { expect(StatsByDay.count).to eq 6 }
@@ -134,7 +134,7 @@ describe RedisCounters::Dumpers::Engine do
           end
 
           on_before_merge do |dumper, _connection|
-            dumper.common_params = {date: dumper.date.strftime('%Y-%m-%d')}
+            dumper.common_params = {date: dumper.args[:date].strftime('%Y-%m-%d')}
           end
         end
       end
