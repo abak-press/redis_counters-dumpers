@@ -266,12 +266,8 @@ module RedisCounters
                             'character varying(4000)'
                           when :integer, :serial, :number
                             'integer'
-                          when :date
-                            'date'
-                          when :timestamp
-                            'timestamp'
-                          when :boolean
-                            'boolean'
+                          when :date, :timestamp, :boolean, :hstore
+                            type.to_s
                           else
                             if type.is_a?(Array) && type.first == :enum
                               type.last.fetch(:name)

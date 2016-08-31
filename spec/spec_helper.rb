@@ -2,6 +2,11 @@
 require 'bundler/setup'
 require 'redis_counters/dumpers'
 
+if ::ActiveRecord::VERSION::MAJOR < 4
+  require 'activerecord-postgres-hstore'
+  require 'simple_hstore_accessor'
+end
+
 require 'combustion'
 Combustion.initialize! :active_record
 
