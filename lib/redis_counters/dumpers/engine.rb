@@ -59,7 +59,7 @@ module RedisCounters
     #     end
     #   end
     #
-    #   dumper.process!(counter, Date.yesterday)
+    #   dumper.process!(counter, date: Date.yesterday)
     #
     # В результате все данные счетчика за вчера, будут
     # смерджены в целевые таблицы, по ключевым полям: company_id и date,
@@ -100,7 +100,7 @@ module RedisCounters
       attr_accessor :common_params
 
       attr_reader :counter
-      attr_reader :date
+      attr_reader :args
 
       # callbacks
 
@@ -127,12 +127,13 @@ module RedisCounters
       # Public: Производит перенос данных счетчика.
       #
       # counter - экземпляр счетчика.
-      # date    - Date - дата, за которую производится перенос данных.
+      # args    - Hash - набор аргументов(кластер и/или партиции) для переноса данных.
       #
       # Returns Fixnum - кол-во обработанных строк.
       #
-      def process!(counter, date)
-        @counter, @date = counter, date
+      def process!(counter, args = {})
+        @counter = counter
+        @args = args
 
         db_transaction do
           merge_data
@@ -185,7 +186,7 @@ module RedisCounters
       end
 
       def fill_temp_table
-        @rows_processed = counter.data(:date => formatted_date) do |batch|
+        @rows_processed = counter.data(args) do |batch|
           @current_batch = batch
           prepare_batch
           insert_batch
@@ -225,8 +226,8 @@ module RedisCounters
 
       def delete_from_redis
         redis_session.pipelined do |redis|
-          counter.partitions(:date => formatted_date).each do |partition|
-            counter.delete_partition_direct!(partition, redis)
+          counter.partitions(args).each do |partition|
+            counter.delete_partition_direct!(args.merge(partition), redis)
           end
         end
 
@@ -265,12 +266,8 @@ module RedisCounters
                             'character varying(4000)'
                           when :integer, :serial, :number
                             'integer'
-                          when :date
-                            'date'
-                          when :timestamp
-                            'timestamp'
-                          when :boolean
-                            'boolean'
+                          when :date, :timestamp, :boolean, :hstore
+                            type.to_s
                           else
                             if type.is_a?(Array) && type.first == :enum
                               type.last.fetch(:name)
@@ -281,10 +278,6 @@ module RedisCounters
 
           "#{field} #{pg_field_type}"
         end.join(',')
-      end
-
-      def formatted_date
-        date.strftime(DATE_FORMAT)
       end
 
       def db_connection

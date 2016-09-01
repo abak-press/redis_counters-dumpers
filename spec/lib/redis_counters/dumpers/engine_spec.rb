@@ -8,12 +8,13 @@ describe RedisCounters::Dumpers::Engine do
              column_id: :integer,
              value: :integer,
              date: :date,
-             subject: [:enum, {name: :subject_types}]
+             subject: [:enum, {name: :subject_types}],
+             params: :hstore
 
       destination do
         model StatsByDay
-        take :record_id, :column_id, :hits, :date
-        key_fields :record_id, :column_id, :date
+        take :record_id, :column_id, :hits, :date, :params
+        key_fields :record_id, :column_id, :date, :params
         increment_fields :hits
         map :hits, to: :value
         condition 'target.date = :date'
@@ -21,8 +22,8 @@ describe RedisCounters::Dumpers::Engine do
 
       destination do
         model StatsTotal
-        take :record_id, :column_id, :hits
-        key_fields :record_id, :column_id
+        take :record_id, :column_id, :hits, :params
+        key_fields :record_id, :column_id, :params
         increment_fields :hits
         map :hits, to: :value
       end
@@ -37,7 +38,7 @@ describe RedisCounters::Dumpers::Engine do
       end
 
       on_before_merge do |dumper, _connection|
-        dumper.common_params = {date: dumper.date.strftime('%Y-%m-%d')}
+        dumper.common_params = {date: dumper.args[:date].strftime('%Y-%m-%d')}
       end
     end
   end
@@ -52,7 +53,7 @@ describe RedisCounters::Dumpers::Engine do
     RedisCounters.create_counter(Redis.current,
       counter_class: RedisCounters::HashCounter,
       counter_name: :record_hits_by_day,
-      group_keys: [:record_id, :column_id, :subject],
+      group_keys: [:record_id, :column_id, :subject, :params],
       partition_keys: [:date]
     )
   end
@@ -63,35 +64,39 @@ describe RedisCounters::Dumpers::Engine do
 
   describe '#process!' do
     before do
-      counter.increment(date: prev_date_s, record_id: 1, column_id: 100, subject: '')
-      counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '')
-      counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '')
-      counter.increment(date: prev_date_s, record_id: 2, column_id: 100, subject: nil)
+      counter.increment(date: prev_date_s, record_id: 1, column_id: 100, subject: '', params: '')
+      counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '', params: '')
+      counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '', params: '')
+      counter.increment(date: prev_date_s, record_id: 2, column_id: 100, subject: nil, params: '')
 
-      dumper.process!(counter, prev_date)
+      params = {a: 1}.stringify_keys.to_s[1..-2]
+      counter.increment(date: prev_date_s, record_id: 3, column_id: 300, subject: nil, params: params)
 
-      counter.increment(date: date_s, record_id: 1, column_id: 100, subject: '')
-      counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '')
-      counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '')
-      counter.increment(date: date_s, record_id: 2, column_id: 100, subject: nil)
+      dumper.process!(counter, date: prev_date)
 
-      dumper.process!(counter, date)
+      counter.increment(date: date_s, record_id: 1, column_id: 100, subject: '', params: '')
+      counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '', params: '')
+      counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '', params: '')
+      counter.increment(date: date_s, record_id: 2, column_id: 100, subject: nil, params: '')
+
+      dumper.process!(counter, date: date)
     end
 
-    Then { expect(StatsByDay.count).to eq 6 }
+    Then { expect(StatsByDay.count).to eq 7 }
     And { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
     And { expect(StatsByDay.where(record_id: 1, column_id: 200, date: prev_date).first.hits).to eq 2 }
     And { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
+    And { expect(StatsByDay.where(record_id: 3, column_id: 300, date: prev_date).first.params).to eq("a" => "1") }
     And { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
     And { expect(StatsByDay.where(record_id: 1, column_id: 200, date: date).first.hits).to eq 2 }
     And { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
 
-    And { expect(StatsTotal.count).to eq 3 }
+    And { expect(StatsTotal.count).to eq 4 }
     And { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
     And { expect(StatsTotal.where(record_id: 1, column_id: 200).first.hits).to eq 4 }
     And { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
 
-    And { expect(StatsAggTotal.count).to eq 2 }
+    And { expect(StatsAggTotal.count).to eq 3 }
     And { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 6 }
     And { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
 
@@ -134,7 +139,7 @@ describe RedisCounters::Dumpers::Engine do
           end
 
           on_before_merge do |dumper, _connection|
-            dumper.common_params = {date: dumper.date.strftime('%Y-%m-%d')}
+            dumper.common_params = {date: dumper.args[:date].strftime('%Y-%m-%d')}
           end
         end
       end
