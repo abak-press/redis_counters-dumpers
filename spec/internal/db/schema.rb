@@ -11,6 +11,13 @@ ActiveRecord::Schema.define do
     enable_extension :hstore
   end
 
+  create_table :stats do |t|
+    t.integer :record_id, null: false
+    t.string :entity_type, null: false
+    t.datetime :date, null: false
+    t.hstore :params
+  end
+
   create_table :stats_by_days do |t|
     t.integer :record_id, null: false
     t.integer :column_id, null: false

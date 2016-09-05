@@ -73,16 +73,51 @@ module RedisCounters
       end
 
       def merge
+        sql = generate_query
+        sql = model.send(:sanitize_sql, [sql, engine.common_params])
+        connection.execute sql
+      end
+
+      def_delegator :model, :connection
+      def_delegator :model, :quoted_table_name, :target_table
+      def_delegator :engine, :temp_table_name, :source_table
+
+      protected
+
+      def generate_query
         target_fields = fields.join(', ')
         temp_source = "_source_#{source_table}"
 
-        sql = <<-SQL
+        query = create_temp_table_query(temp_source)
+
+        if increment_fields.present?
+          query.concat(insert_with_update_query(temp_source, target_fields))
+        else
+          query.concat(insert_without_update_query(temp_source, target_fields))
+        end
+
+        query.concat(drop_temp_table_query(temp_source))
+        query
+      end
+
+      def create_temp_table_query(temp_source)
+        <<-SQL
           CREATE TEMP TABLE #{temp_source} ON COMMIT DROP AS
             SELECT #{selected_fields_expression}
             FROM #{source_table}
             #{source_conditions_expression}
             #{group_by_expression};
+        SQL
+      end
 
+      def drop_temp_table_query(temp_source)
+        <<-SQL
+          DROP TABLE #{temp_source};
+        SQL
+      end
+
+      def insert_with_update_query(temp_source, target_fields)
+        <<-SQL
           WITH
             updated AS
             (
@@ -103,19 +138,16 @@ module RedisCounters
               WHERE #{matching_expression}
                 #{extra_conditions}
           );
-
-          DROP TABLE #{temp_source};
         SQL
-
-        sql = model.send(:sanitize_sql, [sql, engine.common_params])
-        connection.execute sql
       end
 
-      def_delegator :model, :connection
-      def_delegator :model, :quoted_table_name, :target_table
-      def_delegator :engine, :temp_table_name, :source_table
-
-      protected
+      def insert_without_update_query(temp_source, target_fields)
+        <<-SQL
+          INSERT INTO #{target_table} (#{target_fields})
+            SELECT #{target_fields}
+            FROM #{temp_source} as source;
+        SQL
+      end
 
       def selected_fields_expression
         full_fields_map.map { |target_field, source_field| "#{source_field} as #{target_field}" }.join(', ')
