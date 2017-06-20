@@ -1,4 +1,3 @@
-# coding: utf-8
 require 'forwardable'
 require 'callbacks_rb'
 require 'active_support/core_ext/hash/indifferent_access'

@@ -1,4 +1,3 @@
-# coding: utf-8
 require 'active_support/concern'
 require 'redis_counters/dumpers/engine'
 

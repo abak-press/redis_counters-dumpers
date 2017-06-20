@@ -1,5 +1,3 @@
-# coding: utf-8
-require 'bundler/setup'
 require 'redis_counters/dumpers'
 
 if ::ActiveRecord::VERSION::MAJOR < 4
@@ -11,7 +9,7 @@ require 'combustion'
 Combustion.initialize! :active_record
 
 require 'rspec/rails'
-require 'rspec/given'
+require 'pry-byebug'
 
 require 'mock_redis'
 require 'redis'
