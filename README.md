@@ -1,5 +1,7 @@
 # RedisCounters::Dumpers
 
+[![Build Status](https://drone.railsc.ru/api/badges/abak-press/redis_counters-dumpers/status.svg)](https://drone.railsc.ru/abak-press/redis_counters-dumpers)
+
 Dump statistics from Redis to DB
 
 ## Installation

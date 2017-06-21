@@ -83,23 +83,23 @@ describe RedisCounters::Dumpers::Engine do
         dumper.process!(counter, date: date)
       end
 
-      Then { expect(StatsByDay.count).to eq 7 }
-      And { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
-      And { expect(StatsByDay.where(record_id: 1, column_id: 200, date: prev_date).first.hits).to eq 2 }
-      And { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
-      And { expect(StatsByDay.where(record_id: 3, column_id: 300, date: prev_date).first.params).to eq("a" => "1") }
-      And { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
-      And { expect(StatsByDay.where(record_id: 1, column_id: 200, date: date).first.hits).to eq 2 }
-      And { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
+      it { expect(StatsByDay.count).to eq 7 }
+      it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
+      it { expect(StatsByDay.where(record_id: 1, column_id: 200, date: prev_date).first.hits).to eq 2 }
+      it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
+      it { expect(StatsByDay.where(record_id: 3, column_id: 300, date: prev_date).first.params).to eq("a" => "1") }
+      it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
+      it { expect(StatsByDay.where(record_id: 1, column_id: 200, date: date).first.hits).to eq 2 }
+      it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
 
-      And { expect(StatsTotal.count).to eq 4 }
-      And { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
-      And { expect(StatsTotal.where(record_id: 1, column_id: 200).first.hits).to eq 4 }
-      And { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
+      it { expect(StatsTotal.count).to eq 4 }
+      it { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
+      it { expect(StatsTotal.where(record_id: 1, column_id: 200).first.hits).to eq 4 }
+      it { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
 
-      And { expect(StatsAggTotal.count).to eq 3 }
-      And { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 6 }
-      And { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
+      it { expect(StatsAggTotal.count).to eq 3 }
+      it { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 6 }
+      it { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
 
       context 'with source conditions' do
         let(:dumper) do
@@ -145,19 +145,19 @@ describe RedisCounters::Dumpers::Engine do
           end
         end
 
-        Then { expect(StatsByDay.count).to eq 4 }
-        And { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
-        And { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
-        And { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
-        And { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
+        it { expect(StatsByDay.count).to eq 4 }
+        it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
+        it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
+        it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
+        it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
 
-        And { expect(StatsTotal.count).to eq 2 }
-        And { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
-        And { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
+        it { expect(StatsTotal.count).to eq 2 }
+        it { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
+        it { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
 
-        And { expect(StatsAggTotal.count).to eq 2 }
-        And { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 2 }
-        And { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
+        it { expect(StatsAggTotal.count).to eq 2 }
+        it { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 2 }
+        it { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
       end
     end
 
@@ -209,10 +209,10 @@ describe RedisCounters::Dumpers::Engine do
         dumper.process!(counter, entity_type: 'Type2')
       end
 
-      Then { expect(Stat.count).to eq 6 }
-      And { expect(Stat.where(entity_type: 'Type1').count).to eq 5 }
-      And { expect(Stat.where(entity_type: 'Type2').count).to eq 1 }
-      And { expect(Stat.where(record_id: 3, entity_type: 'Type1').first.params).to eq("a" => "1") }
+      it { expect(Stat.count).to eq 6 }
+      it { expect(Stat.where(entity_type: 'Type1').count).to eq 5 }
+      it { expect(Stat.where(entity_type: 'Type2').count).to eq 1 }
+      it { expect(Stat.where(record_id: 3, entity_type: 'Type1').first.params).to eq("a" => "1") }
     end
   end
 end

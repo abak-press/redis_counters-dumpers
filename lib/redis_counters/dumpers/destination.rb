@@ -1,4 +1,3 @@
-# coding: utf-8
 require 'forwardable'
 require 'active_support/core_ext/hash/indifferent_access'
 require 'active_support/core_ext/object/blank'
