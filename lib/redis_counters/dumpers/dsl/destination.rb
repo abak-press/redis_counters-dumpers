@@ -12,6 +12,7 @@ module RedisCounters
           alias_method :destination, :target
 
           setter :model
+          setter :matching_expr
 
           varags_setter :fields
           varags_setter :key_fields

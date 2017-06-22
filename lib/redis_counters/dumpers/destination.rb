@@ -64,6 +64,18 @@ module RedisCounters
       # Условия соединяются через AND.
       attr_accessor :source_conditions
 
+      # Public: Опциональное выражение для определения одинаковых записей в исходной (source) и целевой (target)
+      # таблицах. Эту опцию имеет смысл использовать если например нужно добавить функцию на какую-нибудь колонку,
+      # например:
+      #
+      # matching_expr <<-SQL
+      #   (source.company_id, source.date, coalesce(source.referer, '')) =
+      #     (target.company_id, target.date, coalesce(target.referer, ''))
+      # SQL
+      #
+      # Returns String
+      attr_accessor :matching_expr
+
       def initialize(engine)
         @engine = engine
         @fields_map = HashWithIndifferentAccess.new
@@ -166,6 +178,10 @@ module RedisCounters
       end
 
       def matching_expression
+        matching_expr || default_matching_expr
+      end
+
+      def default_matching_expr
         source_key_fields = key_fields.map { |field| "source.#{field}" }.join(', ')
         target_key_fields = key_fields.map { |field| "target.#{field}" }.join(', ')
         "(#{source_key_fields}) = (#{target_key_fields})"
