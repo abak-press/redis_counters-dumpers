@@ -46,4 +46,10 @@ ActiveRecord::Schema.define do
   end
 
   add_index :stats_agg_totals, [:record_id], unique: true
+
+  create_table :nullable_stats do |t|
+    t.date :date, null: false
+    t.integer :value, null: false, default: 0
+    t.string :payload
+  end
 end

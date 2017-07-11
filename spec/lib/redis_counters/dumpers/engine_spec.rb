@@ -214,5 +214,63 @@ describe RedisCounters::Dumpers::Engine do
       it { expect(Stat.where(entity_type: 'Type2').count).to eq 1 }
       it { expect(Stat.where(record_id: 3, entity_type: 'Type1').first.params).to eq("a" => "1") }
     end
+
+    context 'matching_expr is specified' do
+      let(:dumper) do
+        RedisCounters::Dumpers::Engine.build do
+          name :nullable_stats
+
+          fields date: :date,
+                 value: :integer,
+                 payload: :string
+
+          destination do
+            model NullableStat
+            take :date, :value, :payload
+            key_fields :date, :value, :payload
+            increment_fields :value
+            condition 'target.date = :date'
+            matching_expr <<-EXPR
+              (source.date, coalesce(source.payload, '')) =
+                (target.date, coalesce(target.payload, ''))
+            EXPR
+          end
+
+          on_before_merge do |dumper, _|
+            dumper.common_params = {date: dumper.args[:date].strftime('%Y-%m-%d')}
+          end
+        end
+      end
+
+      let(:counter) do
+        RedisCounters.create_counter(
+          Redis.current,
+          counter_class: RedisCounters::HashCounter,
+          counter_name: :nullable_stats,
+          group_keys: [:payload],
+          partition_keys: [:date]
+        )
+      end
+
+      before do
+        counter.increment(date: date_s, value: 1, payload: 'foobar')
+        counter.increment(date: date_s, value: 1, payload: nil)
+
+        dumper.process!(counter, date: date)
+        counter.delete_all!
+
+        counter.increment(date: date_s, value: 1, payload: 'foobar')
+        counter.increment(date: date_s, value: 1, payload: nil)
+
+        dumper.process!(counter, date: date)
+        counter.delete_all!
+      end
+
+      it 'treats nulls as equal to each other because they are coalesced to an empty string' do
+        expect(NullableStat.count).to eq(2)
+        expect(NullableStat.find_by_payload('foobar').value).to eq(2)
+        expect(NullableStat.find_by_payload(nil).value).to eq(2)
+      end
+    end
   end
 end
