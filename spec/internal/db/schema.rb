@@ -27,7 +27,7 @@ ActiveRecord::Schema.define do
     t.hstore :params
   end
 
-  add_index :stats_by_days, [:record_id, :column_id, :date], unique: true
+  add_index :stats_by_days, [:record_id, :column_id, :date, :params], unique: true, name: :uq
 
   create_table :stats_totals do |t|
     t.integer :record_id, null: false
@@ -37,7 +37,7 @@ ActiveRecord::Schema.define do
     t.hstore :params
   end
 
-  add_index :stats_totals, [:record_id, :column_id], unique: true
+  add_index :stats_totals, [:record_id, :column_id, :params], unique: true
 
   create_table :stats_agg_totals do |t|
     t.integer :record_id, null: false

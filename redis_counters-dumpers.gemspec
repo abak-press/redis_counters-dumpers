@@ -23,8 +23,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'redis-namespace', '>= 1.3'
   spec.add_runtime_dependency 'callbacks_rb', '>= 0.0.1'
   spec.add_runtime_dependency 'redis_counters', '>= 1.3'
-  spec.add_runtime_dependency 'activerecord-postgres-hstore'
-  spec.add_runtime_dependency 'simple_hstore_accessor', '~> 0.2'
 
   spec.add_development_dependency 'bundler', '>= 1.7'
   spec.add_development_dependency 'rake', '>= 10.0'
