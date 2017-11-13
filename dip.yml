@@ -42,5 +42,6 @@ interaction:
 provision:
   - docker volume create --name bundler_data
   - dip bundle config --local https://gems.railsc.ru/ ${APRESS_GEMS_CREDENTIALS}
-  - dip bundle install --full-index
+  - dip clean
+  - dip bundle install
   - dip appraisal install
