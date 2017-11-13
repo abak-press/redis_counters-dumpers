@@ -26,6 +26,7 @@ describe RedisCounters::Dumpers::Engine do
         key_fields :record_id, :column_id, :params
         increment_fields :hits
         map :hits, to: :value
+        map :params, to: "COALESCE(params, '')"
       end
 
       destination do
