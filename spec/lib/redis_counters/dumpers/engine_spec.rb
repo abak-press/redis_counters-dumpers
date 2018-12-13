@@ -65,100 +65,199 @@ describe RedisCounters::Dumpers::Engine do
 
   describe '#process!' do
     context 'when increment_fields specified' do
-      before do
-        counter.increment(date: prev_date_s, record_id: 1, column_id: 100, subject: '', params: '')
-        counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '', params: '')
-        counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '', params: '')
-        counter.increment(date: prev_date_s, record_id: 2, column_id: 100, subject: nil, params: '')
+      context 'without source conditions' do
+        before do
+          counter.increment(date: prev_date_s, record_id: 1, column_id: 100, subject: '', params: '')
+          counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '', params: '')
+          counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '', params: '')
+          counter.increment(date: prev_date_s, record_id: 2, column_id: 100, subject: nil, params: '')
 
-        params = {a: 1}.stringify_keys.to_s[1..-2]
-        counter.increment(date: prev_date_s, record_id: 3, column_id: 300, subject: nil, params: params)
+          params = {a: 1}.stringify_keys.to_s[1..-2]
+          counter.increment(date: prev_date_s, record_id: 3, column_id: 300, subject: nil, params: params)
 
-        dumper.process!(counter, date: prev_date)
+          dumper.process!(counter, date: prev_date)
 
-        counter.increment(date: date_s, record_id: 1, column_id: 100, subject: '', params: '')
-        counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '', params: '')
-        counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '', params: '')
-        counter.increment(date: date_s, record_id: 2, column_id: 100, subject: nil, params: '')
+          counter.increment(date: date_s, record_id: 1, column_id: 100, subject: '', params: '')
+          counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '', params: '')
+          counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '', params: '')
+          counter.increment(date: date_s, record_id: 2, column_id: 100, subject: nil, params: '')
 
-        dumper.process!(counter, date: date)
+          dumper.process!(counter, date: date)
+        end
+
+        it { expect(StatsByDay.count).to eq 7 }
+        it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
+        it { expect(StatsByDay.where(record_id: 1, column_id: 200, date: prev_date).first.hits).to eq 2 }
+        it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
+        it { expect(StatsByDay.where(record_id: 3, column_id: 300, date: prev_date).first.params).to eq("a" => "1") }
+        it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
+        it { expect(StatsByDay.where(record_id: 1, column_id: 200, date: date).first.hits).to eq 2 }
+        it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
+
+        it { expect(StatsTotal.count).to eq 4 }
+        it { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
+        it { expect(StatsTotal.where(record_id: 1, column_id: 200).first.hits).to eq 4 }
+        it { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
+
+        it { expect(StatsAggTotal.count).to eq 3 }
+        it { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 6 }
+        it { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
       end
 
-      it { expect(StatsByDay.count).to eq 7 }
-      it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
-      it { expect(StatsByDay.where(record_id: 1, column_id: 200, date: prev_date).first.hits).to eq 2 }
-      it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
-      it { expect(StatsByDay.where(record_id: 3, column_id: 300, date: prev_date).first.params).to eq("a" => "1") }
-      it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
-      it { expect(StatsByDay.where(record_id: 1, column_id: 200, date: date).first.hits).to eq 2 }
-      it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
-
-      it { expect(StatsTotal.count).to eq 4 }
-      it { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
-      it { expect(StatsTotal.where(record_id: 1, column_id: 200).first.hits).to eq 4 }
-      it { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
-
-      it { expect(StatsAggTotal.count).to eq 3 }
-      it { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 6 }
-      it { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
-
       context 'with source conditions' do
+        context 'when incremented field class is integer' do
+          let(:dumper) do
+            RedisCounters::Dumpers::Engine.build do
+              name :stats_totals
+              fields record_id: :integer,
+                     column_id: :integer,
+                     value: :integer,
+                     date: :date
+
+              destination do
+                model StatsByDay
+                take :record_id, :column_id, :hits, :date
+                key_fields :record_id, :column_id, :date
+                increment_fields :hits
+                map :hits, to: :value
+                condition 'target.date = :date'
+                source_condition 'column_id = 100'
+              end
+
+              destination do
+                model StatsTotal
+                take :record_id, :column_id, :hits
+                key_fields :record_id, :column_id
+                increment_fields :hits
+                map :hits, to: :value
+                source_condition 'column_id = 100'
+              end
+
+              destination do
+                model StatsAggTotal
+                take :record_id, :hits
+                key_fields :record_id
+                increment_fields :hits
+                map :hits, to: 'sum(value)'
+                group_by :record_id
+                source_condition 'column_id = 100'
+              end
+
+              on_before_merge do |dumper, _connection|
+                dumper.common_params = {date: dumper.args[:date].strftime('%Y-%m-%d')}
+              end
+            end
+          end
+
+          before do
+            counter.increment(date: prev_date_s, record_id: 1, column_id: 100, subject: '', params: '')
+            counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '', params: '')
+            counter.increment(date: prev_date_s, record_id: 1, column_id: 200, subject: '', params: '')
+            counter.increment(date: prev_date_s, record_id: 2, column_id: 100, subject: nil, params: '')
+
+            params = {a: 1}.stringify_keys.to_s[1..-2]
+            counter.increment(date: prev_date_s, record_id: 3, column_id: 300, subject: nil, params: params)
+
+            dumper.process!(counter, date: prev_date)
+
+            counter.increment(date: date_s, record_id: 1, column_id: 100, subject: '', params: '')
+            counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '', params: '')
+            counter.increment(date: date_s, record_id: 1, column_id: 200, subject: '', params: '')
+            counter.increment(date: date_s, record_id: 2, column_id: 100, subject: nil, params: '')
+
+            dumper.process!(counter, date: date)
+          end
+
+          it { expect(StatsByDay.count).to eq 4 }
+          it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
+          it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
+          it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
+          it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
+
+          it { expect(StatsTotal.count).to eq 2 }
+          it { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
+          it { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
+
+          it { expect(StatsAggTotal.count).to eq 2 }
+          it { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 2 }
+          it { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
+        end
+      end
+
+      context 'when incremented field class is string' do
         let(:dumper) do
           RedisCounters::Dumpers::Engine.build do
-            name :stats_totals
+            name :realtime_stats
             fields record_id: :integer,
                    column_id: :integer,
                    value: :integer,
-                   date: :date
+                   params: :string,
+                   date: :timestamp
 
             destination do
-              model StatsByDay
-              take :record_id, :column_id, :hits, :date
-              key_fields :record_id, :column_id, :date
-              increment_fields :hits
-              map :hits, to: :value
-              condition 'target.date = :date'
-              source_condition 'column_id = 100'
-            end
-
-            destination do
-              model StatsTotal
-              take :record_id, :column_id, :hits
+              model RealtimeStat
+              take :record_id, :column_id, :date, :hits, :params
               key_fields :record_id, :column_id
-              increment_fields :hits
+              increment_fields :hits, :params
+              value_delimiter '; '
               map :hits, to: :value
-              source_condition 'column_id = 100'
-            end
-
-            destination do
-              model StatsAggTotal
-              take :record_id, :hits
-              key_fields :record_id
-              increment_fields :hits
-              map :hits, to: 'sum(value)'
-              group_by :record_id
-              source_condition 'column_id = 100'
-            end
-
-            on_before_merge do |dumper, _connection|
-              dumper.common_params = {date: dumper.args[:date].strftime('%Y-%m-%d')}
+              condition 'target.date::date = :date::date'
             end
           end
         end
 
-        it { expect(StatsByDay.count).to eq 4 }
-        it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: prev_date).first.hits).to eq 1 }
-        it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: prev_date).first.hits).to eq 1 }
-        it { expect(StatsByDay.where(record_id: 1, column_id: 100, date: date).first.hits).to eq 1 }
-        it { expect(StatsByDay.where(record_id: 2, column_id: 100, date: date).first.hits).to eq 1 }
+        before do
+          counter.increment(date: date, record_id: 1, column_id: 100, subject: '', params: 'abc')
+          dumper.common_params = {date: date, params: 'abc'}
+          dumper.process!(counter, date: date)
 
-        it { expect(StatsTotal.count).to eq 2 }
-        it { expect(StatsTotal.where(record_id: 1, column_id: 100).first.hits).to eq 2 }
-        it { expect(StatsTotal.where(record_id: 2, column_id: 100).first.hits).to eq 2 }
+          counter.increment(date: date, record_id: 1, column_id: 100, subject: '', params: 'xyz')
+          dumper.common_params = {date: date, params: 'xyz'}
+          dumper.process!(counter, date: date)
+        end
 
-        it { expect(StatsAggTotal.count).to eq 2 }
-        it { expect(StatsAggTotal.where(record_id: 1).first.hits).to eq 2 }
-        it { expect(StatsAggTotal.where(record_id: 2).first.hits).to eq 2 }
+        it do
+          expect(RealtimeStat.count).to eq 1
+          expect(RealtimeStat.first.params).to eq 'xyz; abc'
+        end
+      end
+
+      context 'when incremented field class is date or time' do
+        let(:current_time) { Date.today.to_time }
+        let(:dumper) do
+          RedisCounters::Dumpers::Engine.build do
+            name :realtime_stats
+            fields record_id: :integer,
+                   column_id: :integer,
+                   value: :integer,
+                   params: :string,
+                   date: :timestamp
+
+            destination do
+              model RealtimeStat
+              take :record_id, :column_id, :hits, :params, :date
+              key_fields :record_id, :column_id
+              increment_fields :hits, :date
+              map :hits, to: :value
+              condition 'target.date::date = :date::date'
+            end
+          end
+        end
+
+        before do
+          counter.increment(date: date, record_id: 1, column_id: 100, subject: '', params: '')
+          dumper.common_params = {date: current_time}
+          dumper.process!(counter, date: date)
+
+          counter.increment(date: date, record_id: 1, column_id: 100, subject: '', params: '')
+          dumper.common_params = {date: current_time}
+          dumper.process!(counter, date: date)
+        end
+
+        it 'update incremented date' do
+          expect(RealtimeStat.count).to eq 1
+          expect(RealtimeStat.first.date).to eq current_time
+        end
       end
     end
 
