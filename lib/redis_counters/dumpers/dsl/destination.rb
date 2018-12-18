@@ -13,6 +13,7 @@ module RedisCounters
 
           setter :model
           setter :matching_expr
+          setter :value_delimiter
 
           varags_setter :fields
           varags_setter :key_fields

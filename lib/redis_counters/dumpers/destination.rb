@@ -18,6 +18,8 @@ module RedisCounters
       extend Forwardable
       include ::RedisCounters::Dumpers::Dsl::Destination
 
+      VALUE_DELIMITER = ','.freeze
+
       # Ссылка на родительский движек - дампер.
       attr_accessor :engine
 
@@ -75,6 +77,9 @@ module RedisCounters
       #
       # Returns String
       attr_accessor :matching_expr
+
+      # Разделитель значений, String.
+      attr_accessor :value_delimiter
 
       def initialize(engine)
         @engine = engine
@@ -174,7 +179,16 @@ module RedisCounters
       end
 
       def updating_expression
-        increment_fields.map { |field| "#{field} = COALESCE(target.#{field}, 0) + source.#{field}" }.join(', ')
+        increment_fields.map do |field|
+          case model.columns_hash[field.to_s].type
+          when :datetime, :date
+            "#{field} = source.#{field}"
+          when :string
+            "#{field} = array_to_string(ARRAY[source.#{field}, target.#{field}], '#{delimiter}')"
+          else
+            "#{field} = COALESCE(target.#{field}, 0) + source.#{field}"
+          end
+        end.join(', ')
       end
 
       def matching_expression
@@ -196,6 +210,10 @@ module RedisCounters
         return if source_conditions.blank?
 
         "WHERE #{source_conditions.map { |source_condition| "(#{source_condition})" }.join(' AND ')}"
+      end
+
+      def delimiter
+        value_delimiter || VALUE_DELIMITER
       end
     end
   end
