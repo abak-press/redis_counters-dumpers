@@ -183,7 +183,7 @@ module RedisCounters
           case model.columns_hash[field.to_s].type
           when :datetime, :date
             "#{field} = source.#{field}"
-          when :string
+          when :text, :string
             "#{field} = array_to_string(ARRAY[source.#{field}, target.#{field}], '#{delimiter}')"
           else
             "#{field} = COALESCE(target.#{field}, 0) + source.#{field}"
