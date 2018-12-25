@@ -222,6 +222,43 @@ describe RedisCounters::Dumpers::Engine do
         end
       end
 
+      context 'when incremented field class is text' do
+        let(:dumper) do
+          RedisCounters::Dumpers::Engine.build do
+            name :realtime_stats
+            fields record_id: :integer,
+                   column_id: :integer,
+                   value: :integer,
+                   params: :text,
+                   date: :timestamp
+
+            destination do
+              model RealtimeStat
+              take :record_id, :column_id, :date, :hits, :params
+              key_fields :record_id, :column_id
+              increment_fields :hits, :params
+              map :hits, to: :value
+              condition 'target.date::date = :date::date'
+            end
+          end
+        end
+
+        before do
+          counter.increment(date: date, record_id: 1, column_id: 100, subject: '', params: 'abc')
+          dumper.common_params = {date: date, params: 'abc'}
+          dumper.process!(counter, date: date)
+
+          counter.increment(date: date, record_id: 1, column_id: 100, subject: '', params: 'xyz')
+          dumper.common_params = {date: date, params: 'xyz'}
+          dumper.process!(counter, date: date)
+        end
+
+        it do
+          expect(RealtimeStat.count).to eq 1
+          expect(RealtimeStat.first.params).to eq 'xyz,abc'
+        end
+      end
+
       context 'when incremented field class is date or time' do
         let(:current_time) { Date.today.to_time }
         let(:dumper) do
