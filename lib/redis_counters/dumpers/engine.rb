@@ -234,10 +234,16 @@ module RedisCounters
       end
 
       def redis_session
-        @redis_session ||= begin
-          redis = ::Redis.new(counter.redis.client.options)
-          ::Redis::Namespace.new(counter.redis.namespace, :redis => redis)
-        end
+        return @redis_session if defined?(@redis_session)
+
+        client = if Gem::Version.new(::Redis::VERSION) < Gem::Version.new('4')
+                   counter.redis.client
+                 else
+                   counter.redis._client
+                 end
+        redis = ::Redis.new(client.options)
+
+        @redis_session = ::Redis::Namespace.new(counter.redis.namespace, redis: redis)
       end
 
       def create_temp_table
