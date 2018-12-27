@@ -19,3 +19,14 @@ build:
 
       - dip provision
       - dip rspec
+
+  release:
+    image: abakpress/gem-publication
+    pull: true
+    when:
+      event: push
+      branch: master
+    volumes:
+      - /home/data/drone/rubygems:/root/.gem
+    commands:
+      - release-gem --public
