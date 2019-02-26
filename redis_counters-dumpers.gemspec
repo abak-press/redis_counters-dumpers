@@ -18,7 +18,6 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'activesupport', '>= 3.0', '< 5'
   spec.add_runtime_dependency 'activerecord', '>= 3.0'
-  spec.add_runtime_dependency 'pg'
   spec.add_runtime_dependency 'redis', '>= 3.0'
   spec.add_runtime_dependency 'redis-namespace', '>= 1.3'
   spec.add_runtime_dependency 'callbacks_rb', '>= 0.0.1'
