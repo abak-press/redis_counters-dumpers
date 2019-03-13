@@ -52,4 +52,12 @@ ActiveRecord::Schema.define do
     t.integer :value, null: false, default: 0
     t.string :payload
   end
+
+  create_table :realtime_stats do |t|
+    t.integer :record_id, null: false
+    t.integer :column_id, null: false
+    t.integer :hits, null: false, default: 0
+    t.timestamp :date
+    t.string :params
+  end
 end
