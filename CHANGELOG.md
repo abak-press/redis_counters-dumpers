@@ -1,7 +1,15 @@
+# v1.2.2
+
+* 2019-02-26 [a57f56a](../../commit/a57f56a) - __(Oleg Perminov)__ Release v1.2.2 
+* 2018-12-21 [6dd9509](../../commit/6dd9509) - __(Oleg Perminov)__ fix: add type text to updating expression 
+https://jira.railsc.ru/browse/CRM-4532
+
+* 2018-12-13 [b197e2a](../../commit/b197e2a) - __(Oleg Perminov)__ feature: add flexibility to persistent types 
+https://jira.railsc.ru/browse/CRM-4532
+
 # v1.2.1
 
 * 2018-12-27 [dca67bc](../../commit/dca67bc) - __(Andrew N. Shalaev)__ feature: add autopublication to rubygems.org 
-* 2018-12-21 [f4e57f5](../../commit/f4e57f5) - __(Andrew N. Shalaev)__ Release v1.2.1 
 * 2018-12-26 [21b57c8](../../commit/21b57c8) - __(Andrew N. Shalaev)__ fix: constraint pg gem 
 * 2018-12-21 [2f4ceab](../../commit/2f4ceab) - __(Andrew N. Shalaev)__ feature: add support for redis >= v4 
 
