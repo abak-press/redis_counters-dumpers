@@ -4,6 +4,9 @@ kind: pipeline
 type: docker
 
 volumes:
+  - name: rubygems
+    host:
+      path: /home/data/drone/rubygems
   - name: images
     host:
       path: /home/data/drone/images
