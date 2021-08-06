@@ -1,7 +1,11 @@
+# v1.2.4
+
+* 2021-08-06 [f1e9b41](../../commit/f1e9b41) - __(TamarinEA)__ Release 1.2.4 
+* 2021-08-06 [9b68886](../../commit/9b68886) - __(TamarinEA)__ chore: remove mock_redis 
+
 # v1.2.3
 
 * 2021-08-06 [fb93322](../../commit/fb93322) - __(TamarinEA)__ chore: add rubygems volume 
-* 2021-08-05 [ea4350e](../../commit/ea4350e) - __(TamarinEA)__ Release 1.2.3 
 * 2021-08-05 [06cc372](../../commit/06cc372) - __(TamarinEA)__ chore: add ruby 2.4 support 
 
 # v1.2.2
