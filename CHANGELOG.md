@@ -1,6 +1,11 @@
+# v1.2.3
+
+* 2021-08-06 [fb93322](../../commit/fb93322) - __(TamarinEA)__ chore: add rubygems volume 
+* 2021-08-05 [ea4350e](../../commit/ea4350e) - __(TamarinEA)__ Release 1.2.3 
+* 2021-08-05 [06cc372](../../commit/06cc372) - __(TamarinEA)__ chore: add ruby 2.4 support 
+
 # v1.2.2
 
-* 2019-02-26 [a57f56a](../../commit/a57f56a) - __(Oleg Perminov)__ Release v1.2.2 
 * 2018-12-21 [6dd9509](../../commit/6dd9509) - __(Oleg Perminov)__ fix: add type text to updating expression 
 https://jira.railsc.ru/browse/CRM-4532
 
