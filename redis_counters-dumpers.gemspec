@@ -26,10 +26,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bundler', '>= 1.7'
   spec.add_development_dependency 'rake', '>= 10.0'
   spec.add_development_dependency 'rspec', '>= 3.2'
-  spec.add_development_dependency 'rspec-rails', '>= 3.2'
+  spec.add_development_dependency 'rspec-rails', '~> 3.9.1'
   spec.add_development_dependency 'appraisal', '>= 1.0.2'
   spec.add_development_dependency 'mock_redis'
   spec.add_development_dependency 'combustion'
   spec.add_development_dependency 'pry-byebug'
-  spec.add_development_dependency 'test-unit'
 end

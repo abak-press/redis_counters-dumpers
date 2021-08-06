@@ -9,11 +9,17 @@ services:
       - TEST_DB_HOST=db
       - TEST_DB_NAME=docker
       - TEST_DB_USERNAME=postgres
+      - TEST_REDIS_HOST=redis
     command: bash
     depends_on:
       - db
+      - redis
 
   db:
     image: abakpress/postgres-db:$POSTGRES_IMAGE_TAG
     environment:
       - POSTGRES_DB=docker
+
+  redis:
+    image: redis:$REDIS_IMAGE_TAG
+    command: 'redis-server --bind 0.0.0.0'

@@ -1,5 +1,5 @@
 module RedisCounters
   module Dumpers
-    VERSION = '1.2.2'.freeze
+    VERSION = '1.2.3'.freeze
   end
 end

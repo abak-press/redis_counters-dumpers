@@ -60,7 +60,7 @@ describe RedisCounters::Dumpers::Engine do
   end
 
   before do
-    allow(dumper).to receive(:redis_session).and_return(MockRedis.new)
+    allow(dumper).to receive(:redis_session).and_return(Redis.new(host: ENV['TEST_REDIS_HOST']))
   end
 
   describe '#process!' do
